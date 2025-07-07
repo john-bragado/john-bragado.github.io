@@ -1,0 +1,176 @@
+<html>
+	<head>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+		<title>HW 1 Write-up</title>
+		<style>
+			h1 {
+				text-align: center;
+			}
+
+			.container {
+				margin: 0 auto;
+				padding: 60px 20%;
+			}
+
+			figure {
+				text-align: center;
+			}
+
+			img {
+				display: inline-block;
+			}
+
+			body {
+				font-family: 'Inter', sans-serif;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+		<h1>CS184 Summer 2025 Homework 1 Write-Up</h1>
+		<div style="text-align: center;">Names: John Bragado, Kevin Hu</div>
+
+		<br>
+
+		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		
+		<br>
+
+		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+
+		<figure>
+			<img src="lion.jpg" alt="Lion" style="width:50%"/>
+			<figcaption>You can add images with captions!</figcaption>
+		</figure>
+
+		<!--
+		We've already added one heading per task, to make your write-up as navigable when grading. Please fit your write-up within these sections!
+		-->
+
+		<h2>Overview</h2>
+		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+
+		<h2>Task 1: Drawing Single-Color Triangles</h2>
+			<p>Rasterizing triangles is the process of representing triangles (which are defined by 3 points and some sort of texture or color that fills the shape) visually by translating them into pixels which us humans can see on a screen (a grid of pixels).</p>
+
+			<p>The way we did this, given a set of 3 vertices (each with an x- and y- coordinate) and a solid color, is the naive approach. We checked every point within the bounding box of the triangle and colored in the corresponding pixel if its center was “inside” the triangle.</p>
+
+			<p>First, we implemented a helper function, <code>lineEq()</code>, which returns a boolean value that changes depending on which side of the line (given two points) a third point is on.</p>
+
+			<p>Then, inside the <code>rasterize_triangle()</code> function itself, we specified four variables to store the maximum and minimum x- and y-values of the bounding box (based on the triangle’s vertices)</p>
+
+			<p>Then, using a double for-loop, we checked the corresponding coordinate (x, y) of each pixel within the bounding box and if they satisfied either of these conditions for each line segment:</p>
+			<ul>
+			<li> that the winding order (represented by a bool <code>windingOrder</code>) had the same sign as the result of passing (x, y) into the <code>linEq() </code>function, or</li>
+			<li>that the result of passing (x, y) into the <code>linEq() </code>function for was 0, meaning that it was on the line that passed through the two points defining the line segment.</li>
+			</ul>
+			<p>If all three lines met one of the two criteria above, then the pixel at (x, y) would be considered “inside” the triangle and therefore the point would be rendered by calling <code>fill_pixel() </code>and passing in x, y, and the desired color.</p>
+
+			<p>Our algorithm is no worse than one that checks each sample within the bounding box of the triangle because that is exactly what we’re doing. We go through every pixel in the bounding box, meaning that if we have N pixels our runtime for this algorithm would be O(N).</p>
+
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<img src="test4_sr1.png" width="400px"/>
+			</div>		
+		
+		<h2>Task 2: Antialiasing by Supersampling</h2>
+			<p>Supersampling is super useful because sampling once per pixel can result in unintended aliasing. For example, rasterizing <code>test4.svg</code> from task 4 resulted in jaggies and pixels that appear to be detached from the rest of the triangle when they should not be. By sampling multiple times per pixel, we can work around these aliasing issues and create a smoother, more appealing effect. The way we decided to use supersampling in this case was to sample from a pixel n times (where n is the sample_rate  set by the UI, and use the average color of those n subsamples as the resulting pixel color.</p>
+			<p>The most important change we made in task two was in implementing a RasterizerImp::sample_buffer vector and updating the functions:</p>
+			<ul>
+				<li><code>RasterizerImp::set_sample_rate()</code></li>
+					<ul>
+						<li>This function is called when the user changes the sampling rate via the - and = hotkeys. We updated the function to resize the sample buffer based on the newly selected sample_rate.</li>
+					</ul>
+				<li><code>RasterizerImp::set_framebuffer_target()</code></li>
+				<ul>
+						<li>Similarly to set_sample_rate(), this function had to be updated to resize the sample buffer accordingly.</li>
+					</ul>
+				<li><code>RasterizerImp::clear_buffers()</code></li>
+			</ul>
+			<p>And the size of the sample buffer itself was simply determined by product of the width and height of the framebuffer as well as the sample rate, n. since each item in the framebuffer vector represents a pixel and the sample_buffer should have n subsamples per pixel.</p>
+			
+			<p>The function <code>RasterizerImp::fill_pixel()</code> with parameters x, y, and C was updated to populate every subsample in </ode>sample_buffer</code> with the color C (rather than just a single sample per pixel). The function <code>RasterizerImp::rasterize_triangle()</code> was modified as well. Whereas we had previously called <code>fill_pixel()</code>  in task 1, we now populate the <code>sample_buffer</code> to enable support for supersampling.</p>
+			
+			<p>Finally, <code>RasterizerImp::resolve_to_framebuffer()</code> was updated to average the colors of each pixel’s subsamples and assign the corresponding item in <code>RasterizerImp::rgb_framebuffer_target</code> to the averaged color.</p>
+			
+			<p>As seen in the table below, this results in a “smoothed out” look where pixels on the edge of triangles tend to be some blend of the White background and the triangle’s color. When looked at from a typical viewing distance (and not magnified), this eliminates jaggies and minimizes the appearance of detached pixels that we saw with a sample rate of 1.</p>
+		
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+					<img src="test4_sr1.png" width="400px"/>
+					<figcaption>Regular sampling (sample_rate = 1)</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="test4_sr4.png" width="400px"/>
+					<figcaption>Supersampling at a rate of 4 (2x2)</figcaption>
+					</td>
+				</tr>
+				<tr style="height: 30px;"></tr>
+				<tr>
+					<td style="text-align: center;">
+					<img src="test4_sr9.png" width="400px"/>
+					<figcaption>Supersampling at a rate of 9 (3x3)</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="test4_sr16.png" width="400px"/>
+					<figcaption>Supersampling at a rate of 16 (4x4)</figcaption>
+					</td>
+				</tr>
+				</table>
+			</div>
+
+		<h2>Task 3: Transforms</h2>
+		We changed the colors to give Cubeman brown skin, blue jeans, and a green shirt. We also rotate and translated his arms to be by his head, and then rotated the entire drawing 180° (and translated him downward) to make it look like he’s doing a handstand. 
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+				<img src="my_robot.png" width="400px"/>
+		</div>
+
+		<h2>Task 4: Barycentric coordinates</h2>
+		<p>Barycentric coordinates are a set of scalar values that can represent points on the face of a triangle. We use barycentric coordinate systems to implement interpolation across triangles. They can be given in the form: \( \alpha A + \beta B +  \gamma C \) where A, B and C are vectors we want to interpolate (in this case, color) while \( \alpha \), \( \beta \) and \( \gamma \) are scalars (such that \( \alpha + \beta + \gamma = 1 \)) that control how much each vector component contributes to the final value.</p>
+
+		<p>One way to look at this is through an example of a triangle whose colors are interpolated from the RGB spectrum. In Fig 1., we have a triangle with a blue, red, and green vertices. If the red corner is A, blue is B, and green is G, then we can represnt each of these colors as 3D vectors from the RGB spectrum. That is, A = [255, 0, 0], B = [0, 255, 0], and C = [0, 0, 255]. Using the Barycentric coordinate system for the red corner A, we would find that a point in the red corner is 100% red and 0% blue or green. A point on the top edge halfway between the red and green corners would have coordinates of \( \alpha = 0.5\), \( \beta = 0\) and \( \gamma = 0.5\), resulting in a dull yellow [128, 128, 0]</p>
+
+
+
+
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+					<img src="test7.png" width="400px"/>
+					<figcaption>test7.png</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="bary_demo.png" width="400px"/>
+					<figcaption>Fig 1.</figcaption>
+					</td>
+				</tr>
+				</table>
+			</div>
+
+		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
+		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
+		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+		<h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
+		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+		<h2>Additional Notes (please remove)</h2>
+		<ul>
+			<li>You can also add code if you'd like as so: <code>code code code</code></li>
+			<li>If you'd like to add math equations, 
+				<ul>
+					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
+					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
+				</ul>
+			</li>
+		</ul>
+		</div>
+	</body>
+</html>
