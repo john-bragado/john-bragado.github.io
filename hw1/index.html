@@ -23,6 +23,12 @@
 
 			body {
 				font-family: 'Inter', sans-serif;
+
+			}
+
+			code {
+				background-color:rgb(234, 237, 239);
+				color:rgb(41, 53, 157);
 			}
 		</style>
 	</head>
@@ -87,7 +93,7 @@
 					</ul>
 				<li><code>RasterizerImp::clear_buffers()</code></li>
 			</ul>
-			<p>And the size of the sample buffer itself was simply determined by product of the width and height of the framebuffer as well as the sample rate, n. since each item in the framebuffer vector represents a pixel and the sample_buffer should have n subsamples per pixel.</p>
+			<p>And the size of the sample buffer itself was simply determined by product of the width and height of the framebuffer as well as the sample rate, n. since each item in the framebuffer vector represents a pixel and the sample_buffer should have n subsamples per pixel. The frame buffer vector is written and accessed by breaking each screen pixel into n subsample points, say in a 2 by 2 screen pixel, with sample rate of 4, the vector will be [pixel 1 sample 1, pixel 1 sample 2, pixel 1 sample 3, pixel 1 sample 4, pixel 2 sample 1 …] By doing that, we can simply access the all the super sampling point (in sample buffer space) value in <code>RasterizerImp::fill_pixel()</code> and <code>RasterizerImp::resolve_to_framebuffer()</code> whenever we know about which pixel in framebuffer we are looking for.</p>
 			
 			<p>The function <code>RasterizerImp::fill_pixel()</code> with parameters x, y, and C was updated to populate every subsample in </ode>sample_buffer</code> with the color C (rather than just a single sample per pixel). The function <code>RasterizerImp::rasterize_triangle()</code> was modified as well. Whereas we had previously called <code>fill_pixel()</code>  in task 1, we now populate the <code>sample_buffer</code> to enable support for supersampling.</p>
 			
@@ -120,7 +126,11 @@
 				</tr>
 				</table>
 			</div>
-
+		
+			<p><b>Extra Credit for Task 2:</b></p>
+			<p>Here we implemented jittering toward the sampling point and the following are pictures with jittering combined with super sampling. The point of jittering is by adding some randomness as noise to the sampling point, therefore reducing the “fake lower frequency signal” look created by insufficient sampling frequency to sample higher frequency signal and convert that look into random noisy look that look less like a lower frequency signal.</p>
+			<p>It is implemented after the sampling point is determined. A random number generator will created a jittered x and y by adding a random number that is between half of the spacing between the pixels (both in positive and negative side) so that it will create that jittered look.</p>
+			<p>The code for this jitter-sampling is written as a different version of the <code>RasterizerImp::rasterize_triangle()</code> function which has been commented out right below our original implementation.</p>
 		<h2>Task 3: Transforms</h2>
 		We changed the colors to give Cubeman brown skin, blue jeans, and a green shirt. We also rotated and translated his arms to be by his head, and then rotated the entire drawing 180° (and translated him downward) to make it look like he’s doing a handstand. 
 
@@ -155,7 +165,46 @@
 		<p>The color wheel in test7.svg is a slightly more complex version of the interpolation seen in Fig. 1. Instead of one triangle, test7.svg contains many triangles arranged as slices in a circle, where each triangle interpolates between two bright colors towards the edge of the circle and black in the middle. This results in a smooth, round gradient effect between all hues.</p>
 
 		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
-		[TODO]
+		<p>Pixel sampling is the process of taking an image texture and “sampling” colors from it to map it onto a grid of pixels. This is especially useful when mapping 2D texture onto distorted grids or onto 3D objects. One of the choices you have to make when implementing pixel_sampling is how you want to deal with sampling pixels from texels when there isn’t an exact match for resolution. We implemented two different sampling methods: naerest neighbors and bilinear interpolation.</p>
+
+		<p>To implement nearest neighbor texture sampling in <code>Texture::sample_nearest()</code>, we simply found the nearest whole integer x- and y- values that correspond to the given UV coordinates passed in as arguments. We did this by multiplying the u and v values by the mipmap (texture) width and height, respectively, rounding them to the nearest whole numbers, and assigning them to two int variables <code>nearest_x</code> and <code>nearest_y</code>. </p>
+
+		<p>As an example, let’s say we are sampling a point on the UV map with coordinates [0.31, 0.27] on a texture with a width and height of 450 x 450 texels. Our nearest texel on the UV space would be [140, 122], rounded up from [139.5, 121.5], and so we would use that texel’s color value as the color displayed to the corresponding pixel on the screen.</p>
+
+		<p>To implement bilinear interpolation texture sampling in <code>Texture::sample_bilinear()</code>,  we stored x and y, the float values which represented the precise location the UV texture, as well as lower_x and lower_y,  which represented the nearest texel (rounding down). Most inputs would lie between four points, so our code horizontally interpolated the color between the upper two nearest texels as well as the color between the lower two nearest texels, and then vertically interpolated those two colors and returned the result.</p>
+
+		<p>Since we knew that lerping values (specifically, colors) would be have to be done many times in the process of pixel sampling, we created two helper functions in the <code>texture.cpp</code> file, <code>lerp()</code> and <code>lerpColor()</code>. These allowed us to quickly lerp scalars and colors when needed.</p>
+
+		<p>The below images demonstrate the difference in the nearest neighbor and bilinear interpolation sampling methods.</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+				<td style="text-align: center;">
+				<img src="worldmap_sr1_nearest.png" width="400px"/>
+				<figcaption>Fig. 1 - nearest neighbor, sample_rate = 1</figcaption>
+				</td>
+				<td style="text-align: center;">
+				<img src="worldmap_sr1_linear.png" width="400px"/>
+				<figcaption>Fig. 2 - bilinear interpolation, sample_rate = 1</figcaption>
+				</td>
+			</tr>
+			<tr style="height: 30px;"></tr>
+			<tr>
+				<td style="text-align: center;">
+				<img src="worldmap_sr16_nearest.png" width="400px"/>
+				<figcaption>Fig. 3 - nearest neighbor, sample_rate = 16</figcaption>
+				</td>
+				<td style="text-align: center;">
+				<img src="worldmap_sr16_linear.png" width="400px"/>
+				<figcaption>Fig. 4 - bilinear interpolation, sample_rate = 16</figcaption>
+				</td>
+			</tr>
+			</table>
+		</div>
+
+		<p>The difference in the two sampling methods is clear from Figures 1 and 2. Whereas Fig. 1 shows the white curves (representing latitude and longitude) as broken lines of pixels. Meanwhile, the linear sampling in Fig. 2 shows much smoother antialiasing effects. We also notice that when the sampling rate is as high as 16 samples per pixel, the difference between the two sampling methods is not nearly as noticable. Thus, the difference between the two pixel sampling methods is much more impactful at smaller sampling rates (or when there is no subsampling) because in bilinear interpolation, we are doing a very similar process to supersampling where we are taking multiple samples and averaging their colors to get the color for our pixel. On the other hand, nearest neighbors sampling only takes one sample (the color of the nearest texel) and uses that for rasterizing, which is a recipe for jaggies and other aliasing.</p>
+
 
 		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
 		[TODO]
