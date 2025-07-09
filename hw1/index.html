@@ -39,23 +39,24 @@
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://john-bragado.dev/hw1">https://john-bragado.dev/hw1</a>
+		Link to webpage: <a href="https://john-bragado.dev/hw1">https://john-bragado.dev/hw1</a>
 		
 		<br>
 
-		Link to GitHub repository: (TODO) <a href="https://github.com/john-bragado/john-bragado.github.io">https://github.com/john-bragado/john-bragado.github.io</a>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184/hw-rasterizer-lend-break">https://github.com/cal-cs184/hw-rasterizer-lend-break</a>
+		
+		<br>
 
-		<figure>
-			<img src="lion.jpg" alt="Lion" style="width:50%"/>
-			<figcaption>You can add images with captions!</figcaption>
-		</figure>
+		Link to HW 1 spec: <a href="https://cs184.eecs.berkeley.edu/su25/hw/hw1/">https://cs184.eecs.berkeley.edu/su25/hw/hw1/</a>
 
 		<!--
 		We've already added one heading per task, to make your write-up as navigable when grading. Please fit your write-up within these sections!
 		-->
 
 		<h2>Overview</h2>
-		[TODO]
+		<p>In this assignment we learned the foundations of (and implemented various techinques for) rasterization, transforms, and antialiasing.</p>
+
+		<p>(!) Extra Credit: we only attempted the extra credit for <strong>Task 2</strong>.</p>
 
 		<h2>Task 1: Drawing Single-Color Triangles</h2>
 			<p>Rasterizing triangles is the process of representing triangles (which are defined by 3 points and some sort of texture or color that fills the shape) visually by translating them into pixels which us humans can see on a screen (a grid of pixels).</p>
@@ -105,22 +106,22 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 				<tr>
 					<td style="text-align: center;">
-					<img src="test4_sr1.png" width="400px"/>
+					<img src="test4_sr1.png" width="300px"/>
 					<figcaption>Regular sampling (sample_rate = 1)</figcaption>
 					</td>
 					<td style="text-align: center;">
-					<img src="test4_sr4.png" width="400px"/>
+					<img src="test4_sr4.png" width="300px"/>
 					<figcaption>Supersampling at a rate of 4 (2x2)</figcaption>
 					</td>
 				</tr>
 				<tr style="height: 30px;"></tr>
 				<tr>
 					<td style="text-align: center;">
-					<img src="test4_sr9.png" width="400px"/>
+					<img src="test4_sr9.png" width="300px"/>
 					<figcaption>Supersampling at a rate of 9 (3x3)</figcaption>
 					</td>
 					<td style="text-align: center;">
-					<img src="test4_sr16.png" width="400px"/>
+					<img src="test4_sr16.png" width="300px"/>
 					<figcaption>Supersampling at a rate of 16 (4x4)</figcaption>
 					</td>
 				</tr>
@@ -207,11 +208,99 @@
 
 
 		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
-		[TODO]
+			<p>Level sampling in texture mapping is designed to solve the problem of aliasing due to insufficient sampling frequency of the texture at distance; it is implemented by selecting (or sampling) a lower resolution texture that matches better with the sampling frequency so as to counter the aliasing problem.</p>
+			<p>Before sampling, we first need to determine which level we should select. This is calculated based on the change in the barycentric coordinates of sampling point with x+1 and y+1 to get the offset in UV value when x and y change by one, then duvdx and duvdy is computed by subtracting the uv value and the x+1 value and y+1 value. Then the appropriate value is calculated from the formula provided in the lecture.</p>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<p>\( D = \log_2 L \)</p>
+				<p>
+				\( L = \max \left( 
+				\sqrt{ \left( \frac{du}{dx} \right)^2 + \left( \frac{dv}{dx} \right)^2 },\ 
+				\sqrt{ \left( \frac{du}{dy} \right)^2 + \left( \frac{dv}{dy} \right)^2 }
+				\right) \)
+				</p>
+			</div>
 
-		<h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
-		[TODO]
+			<p>The problem right now is that D here is a continuous value while the mipmap is discrete, what to do with them will then be decided by the sampling method described below.</p>
 
+			<p>In the code, the level sampling is implemented in two ways (besides option where we don’t level sample at all, <code>L_ZERO</code>):</p>
+			<ul>
+			<li>In <code>L_NEAREST</code>, the mapping from continuous level value to discrete mipmap level is done simply by rounding to the nearest integer, then the pixel sampling implemented in the previous part will take over.</li>
+			<li>In <code>L_LINEAR</code>, the continuous level will be rounded up and down into two levels, they will each be sampled according the pixel sample method, with two color value from sampling from <code>floor(level)</code> and <code>ceil(level)</code>, we can do an linear interpolation based on how close is the continuous value to the discrete value to get a final color value to output as the result of this level sampling.</li>
+			</ul>
+			
+			<p>There are a variety of tradeoffs that come with sampling using these different techniques: pixel sampling, level sampling, and supersampling.</p>
+
+			Pixel Sampling:
+			<ul>
+			<li>Computation: Both nearest neighbor and bilinear take a linear time as nearest neighbor only needs rounding and biliner needs the same operation 4 times, which is still linear time.</li>
+				<li>Memory: No extra memory, only base texture needed to be stored.</li>
+				<li>Anti Aliasing: Weakest as it cannot deal with the jaggies and moire patterns due to insufficient sampling rate when the texture is far away. While bilinear interpolation will help by increasing sample rate, it has no context about the distance or ability to work with different texture levels.</li>
+			</ul>
+
+			Level Sampling:
+			<ul>
+				<li>Computation: Close to pixel sampling as they are also linear time.</li>
+				<li>Memory: Add about 33% more memory to store all different levels of mipmap.</li>
+				<li>Anti Aliasing: Specifically to help the case where there is insufficient sampling rate when the texture is sampled “far” (at low sample rate), but not helpful when the texture is very close and it can get pixelated.</li>
+			</ul>
+
+			Supersampling (sampling per pixel):
+			<ul>
+				<li>Computation: Needs the most computation as the amount of computation scales linearly as we increase in sample size on top of the screen pixel count.</li>
+				<li>Memory: Need the most memory as the amount of computation scales linearly as we increase in sample size on top of the screen pixel count.</li>
+				<li>Antialiasing: Best as it can handle actual high frequency data rather than some filtering technique to remove frequency. But it has no use when it comes to the insufficient sampling of the texture when we are very far.</li>
+			</ul>
+
+			<p>We are using the following image with horizontal stripes of various colors to demonstrate the difference between level sampling with nearest neighbors and bilinear interpolation. </p>
+
+			<div style="display: flex; flex-direction: column; align-items: center;">
+					<img src="stripes.png" width="200px"/>
+					<figcaption>Designed by <a href="https://www.freepik.com/free-photos-vectors/stripe-gradient">Freepik</a></figcaption>
+			</div>
+
+			<p>Below are 6 different renderings of the image using the same distortion from the world map in <code>svg/texmap/test1.svg</code></p>
+
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+					<img src="LzeroPnearest.png" width="250px"/>
+					<figcaption><code>L_ZERO</code>, <code>P_NEAREST</code></figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="LnearestPnearest.png" width="250px"/>
+					<figcaption><code>L_NEAREST</code>, <code>P_NEAREST</code></figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="LlinearPnearest.png" width="250px"/>
+					<figcaption><code>L_LINEAR</code>, <code>P_NEAREST</code></figcaption>
+					</td>
+				</tr>
+				<tr style="height: 30px;"></tr>
+				<tr>
+					<td style="text-align: center;">
+					<img src="LzeroPlinear.png" width="250px"/>
+					<figcaption><code>L_ZERO</code>, <code>P_LINEAR</code></figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="LnearestPlinear.png" width="250px"/>
+					<figcaption><code>L_NEAREST</code>, <code>P_LINEAR</code></figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="LlinearPlinear.png" width="250px"/>
+					<figcaption><code>L_LINEAR</code>, <code>P_LINEAR</code></figcaption>
+					</td>
+				</tr>
+				</table>
+			</div>
+
+			<p>The way the svg file distorts the image, the regions toward the edges of the rasterized image are more compacted and “squished”, which creates an effect similar to if the edges were farther away from the viewpoint. Thus, the closer a region is to the edge of this image the higher the mipmap level and therefore the blurrier the resulting region is.</p>
+
+			<p>Differences in mipmap levels are most obvious when the level sampling method (LSM) is set to <code>L_NEAREST</code>, as there is a clear “jump” between the mipmap levels. Meanwhile when the LSM is set to <code>L_LINEAR</code>, the difference between different mipmap levels is more gradual and results in an effect that is much more pleasing to the eye.</p>
+		
+		<!-- <h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
+		[TODO]
+ -->
 		<!-- <h2>Additional Notes (please remove)</h2> -->
 		<!-- <ul>
 			<li>You can also add code if you'd like as so: <code>code code code</code></li>
