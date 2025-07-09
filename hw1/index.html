@@ -8,6 +8,10 @@
 				text-align: center;
 			}
 
+			h2 {
+				page-break-before: always; 
+			}
+
 			.container {
 				margin: 0 auto;
 				padding: 60px 20%;
@@ -30,6 +34,11 @@
 				background-color:rgb(234, 237, 239);
 				color:rgb(41, 53, 157);
 			}
+
+			figcaption {
+				font-size: small;
+			}
+			
 		</style>
 	</head>
 	<body>
@@ -132,6 +141,33 @@
 			<p>Here we implemented jittering toward the sampling point and the following are pictures with jittering combined with super sampling. The point of jittering is by adding some randomness as noise to the sampling point, therefore reducing the “fake lower frequency signal” look created by insufficient sampling frequency to sample higher frequency signal and convert that look into random noisy look that look less like a lower frequency signal.</p>
 			<p>It is implemented after the sampling point is determined. A random number generator will created a jittered x and y by adding a random number that is between half of the spacing between the pixels (both in positive and negative side) so that it will create that jittered look.</p>
 			<p>The code for this jitter-sampling is written as a different version of the <code>RasterizerImp::rasterize_triangle()</code> function which has been commented out right below our original implementation.</p>
+		
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+					<img src="jitter_sr1.png" width="300px"/>
+					<figcaption>Jitter sampling, sample_rate = 1</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="jitter_sr4.png" width="300px"/>
+					<figcaption>Jitter sampling, sample_rate = 4</figcaption>
+					</td>
+				</tr>
+				<tr style="height: 30px;"></tr>
+				<tr>
+					<td style="text-align: center;">
+					<img src="jitter_sr9.png" width="300px"/>
+					<figcaption>Jitter sampling, sample_rate = 9</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="jitter_sr16.png" width="300px"/>
+					<figcaption>Jitter sampling, sample_rate = 16</figcaption>
+					</td>
+				</tr>
+				</table>
+			</div>
+		
 		<h2>Task 3: Transforms</h2>
 		We changed the colors to give Cubeman brown skin, blue jeans, and a green shirt. We also rotated and translated his arms to be by his head, and then rotated the entire drawing 180° (and translated him downward) to make it look like he’s doing a handstand. 
 
@@ -182,29 +218,29 @@
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			<tr>
 				<td style="text-align: center;">
-				<img src="worldmap_sr1_nearest.png" width="400px"/>
-				<figcaption>Fig. 1 - nearest neighbor, sample_rate = 1</figcaption>
+				<img src="worldmap_sr1_nearest.png" width="300px"/>
+				<figcaption>Fig. 2 - nearest neighbor, sample_rate = 1</figcaption>
 				</td>
 				<td style="text-align: center;">
-				<img src="worldmap_sr1_linear.png" width="400px"/>
-				<figcaption>Fig. 2 - bilinear interpolation, sample_rate = 1</figcaption>
+				<img src="worldmap_sr1_linear.png" width="300px"/>
+				<figcaption>Fig. 3 - bilinear interpolation, sample_rate = 1</figcaption>
 				</td>
 			</tr>
 			<tr style="height: 30px;"></tr>
 			<tr>
 				<td style="text-align: center;">
-				<img src="worldmap_sr16_nearest.png" width="400px"/>
-				<figcaption>Fig. 3 - nearest neighbor, sample_rate = 16</figcaption>
+				<img src="worldmap_sr16_nearest.png" width="300px"/>
+				<figcaption>Fig. 4 - nearest neighbor, sample_rate = 16</figcaption>
 				</td>
 				<td style="text-align: center;">
-				<img src="worldmap_sr16_linear.png" width="400px"/>
-				<figcaption>Fig. 4 - bilinear interpolation, sample_rate = 16</figcaption>
+				<img src="worldmap_sr16_linear.png" width="300px"/>
+				<figcaption>Fig. 5 - bilinear interpolation, sample_rate = 16</figcaption>
 				</td>
 			</tr>
 			</table>
 		</div>
 
-		<p>The difference in the two sampling methods is clear from Figures 1 and 2. Whereas Fig. 1 shows the white curves (representing latitude and longitude) as broken lines of pixels. Meanwhile, the linear sampling in Fig. 2 shows much smoother antialiasing effects. We also notice that when the sampling rate is as high as 16 samples per pixel, the difference between the two sampling methods is not nearly as noticable. Thus, the difference between the two pixel sampling methods is much more impactful at smaller sampling rates (or when there is no subsampling) because in bilinear interpolation, we are doing a very similar process to supersampling where we are taking multiple samples and averaging their colors to get the color for our pixel. On the other hand, nearest neighbors sampling only takes one sample (the color of the nearest texel) and uses that for rasterizing, which is a recipe for jaggies and other aliasing.</p>
+		<p>The difference in the two sampling methods is clear from Figures 2 and 3. Whereas Fig. 2 shows the white curves (representing latitude and longitude) as broken lines of pixels. Meanwhile, the linear sampling in Fig. 3 shows much smoother antialiasing effects. We also notice that when the sampling rate is as high as 16 samples per pixel, the difference between the two sampling methods is not nearly as noticable. Thus, the difference between the two pixel sampling methods is much more impactful at smaller sampling rates (or when there is no subsampling) because in bilinear interpolation, we are doing a very similar process to supersampling where we are taking multiple samples and averaging their colors to get the color for our pixel. On the other hand, nearest neighbors sampling only takes one sample (the color of the nearest texel) and uses that for rasterizing, which is a recipe for jaggies and other aliasing.</p>
 
 
 		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
@@ -254,9 +290,12 @@
 			<p>We are using the following image with horizontal stripes of various colors to demonstrate the difference between level sampling with nearest neighbors and bilinear interpolation. </p>
 
 			<div style="display: flex; flex-direction: column; align-items: center;">
-					<img src="stripes.png" width="200px"/>
+					<img src="stripes.png" width="150px"/>
 					<figcaption>Designed by <a href="https://www.freepik.com/free-photos-vectors/stripe-gradient">Freepik</a></figcaption>
 			</div>
+
+			<br>
+			<h2></h2>
 
 			<p>Below are 6 different renderings of the image using the same distortion from the world map in <code>svg/texmap/test1.svg</code></p>
 
