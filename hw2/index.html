@@ -9,7 +9,7 @@
 
 			.container {
 				margin: 0 auto;
-				padding: 60px 20%;
+				padding: 60px 10%;
 			}
 
 			figure {
@@ -48,7 +48,14 @@
 		-->
 
 		<h2>Overview</h2>
-		For this assignment, we were tasked to implement bezier curves & surfaces, area-weighted vertex normal calculations, various edge operations with the halfedge data structure, and loop subdivision.
+		<p>For this assignment, we were tasked to implement bezier curves & surfaces, area-weighted vertex normal calculations, various edge operations with the halfedge data structure, and loop subdivision.</p>
+
+
+		<p>We tried to start as early as possible on this homework since we knew it would probably take a lot of time (especially dealing with halfedges and pointers), and we were right. Here's our thoughts on the implementation and debugging process:</p>
+		<p>Kevin: Personally, I really enjoy the part where we figure out how to traverse the half-edge data structure (though not so much the debugging). I used to be somewhat skeptical about whether it actually worked better than just storing pointers to vertices. But as we worked through the pointer assignments and learned how to flip and split edges, I became fascinated — and convinced — that it’s a really clever and powerful structure.</p>
+		<p>John: This homework was super interesting to me and it was really satisfying seeing the bezier curves and loop subdivision actually work. Debugging was honestly a pain for the halfedge operations (tasks 4-6), but I learned a lot about using pointers and references in C++ (which was the cause of much of our pain debugging), but I am excited to learn more. I think being able to see the few small functions we wrote for bezier curves contribute to the rendering of such complex reminded me why graphics is so fascinating and makes me want to make my own graphics engine from scratch.</p>
+
+		<div style="break-after:page"></div>
 
 		<h2>Section I: Bezier Curves and Surfaces</h2>
 
@@ -108,6 +115,7 @@
 			<figcaption>Another curve with points at slightly different points</figcaption>
 		</div>
 
+		<div style="break-after:page"></div>
 		<h3>Part 2: Bezier surfaces with separable 1D de Casteljau</h3>
 		<p>Now that we can calculate vectors from one step of de Casteljau using <code>evaluateStep()</code>, we just need to run evaluateStep recursively until it only returns one <code>Vector3D</code>. We implement this in the function <code>evaluate1D()</code>.</p>
 
@@ -119,6 +127,7 @@
 			<figcaption>a teapot made up of bezier patches</figcaption>
 		</div>
 
+		<div style="break-after:page"></div>
 		<h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 
 		<h3>Part 3: Area-weighted vertex normals</h3>
@@ -142,6 +151,7 @@
 			  </tr>
 			</table>
 		</div>
+		<div style="break-after:page"></div>
 		<h3>Part 4: Edge flip</h3>
 		<p>Below is our amazing, non-exhaustive list of pointer reassignments. We first created pointers for every item in two triangles (including vertices, halfedges, edges, and faces), and named them according to the convention in our diagram (using a as the initial halfedge). We then reallocated pointers, such as halfedge -> next(), were pointing to accordingly.</p>
 
@@ -161,9 +171,59 @@
 			</table>
 		</div>
 
+		<div style="break-after:page"></div>
 		<h3>Part 5: Edge split</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+<p>In task 5, we implemented the edge split operation. We first started by creating pointers for every halfedge, face, vertex, and edge for both initial triangles involved in the edge split. Then we calculated the position of the new "midpoint" (the vertex that bisects the original edge and which will connect all 4 faces after the edge split) by averaging the positions of both neighboring vertices. Then, we created new halfedge elements using the <code>newEdge()</code>, <code>newFace()</code>, and <code>newHalfedge()</code> constructors. Finally, we (after much contemplation and drawing diagrams) we assigned the pointers for all the new elements (most of which were the 6 new halfedges) and any elements that needed pointers reassigned.</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="cowdef.png" width="400px"/>
+				  <figcaption>cow.dae</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="cowsplit.png" width="400px"/>
+				  <figcaption>cow.dae with edge splits</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="beandef.png" width="400px"/>
+				  <figcaption>bean.dae</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="beansplit.png" width="400px"/>
+				  <figcaption>bean.dae with edge splits and flips</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+<p>Out of all the tasks on this assignment, task 5 was the one we definitely spent the most time on due to the tedious debugging journey we went through. We breezed through the initial code pretty quickly at first. But when we tested it out on a mesh, for some reason 1 or 2 faces would just vanish into thin air (see screenshot below). We reviewed every line to make sure the pointer assignments were right, we used the <code>check_for()</code> function and printed things to the console to keep track of which elements were pointing to what, and we even wrote down a page full of memory addresses from the debugging info screen just to see which were right.</p>
+	<div style="display: flex; flex-direction: column; align-items: center;">
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			<td style="text-align: center;">
+				<img src="edgesplit_bug.png" width="400px"/>
+				<figcaption>missing face after edge splitting</figcaption>
+			</td>
+			<td style="text-align: center;">
+				<img src="scribblings.jpg" width="400px"/>
+				<figcaption>scribblings of a madman</figcaption>
+			</td>
+			</tr>
+			<tr>
+			<td style="text-align: center;">
+				<img src="codesnippet.png" width="400px"/>
+				<figcaption>the two lines of code that fixed our bug</figcaption>
+			</td>
+			</tr>
+		</table>
+		</div>
 
+
+
+
+		<div style="break-after:page"></div>
 		<h3>Part 6: Loop subdivision for mesh upsampling</h3>
 		<p>
 		Our implementation of Loop Subdivision mostly follows the spec from HW2. We started by iterating through all the vertices and computing their updated positions using the <code>u</code> and <code>1 - n * u</code> ratios described in the spec. To find the neighboring vertices, we used a variant of the solution to Discussion Worksheet 5, Problem 1 but instead we accessed vertices instead of edges. Then we stored these new positions in each vertex's <code>newPosition</code>.
@@ -197,14 +257,14 @@
 					<figcaption>cube.dae</figcaption>
 					</td>
 					<td style="text-align: center;">
-					<img src="task6_round.png" width="300px"/>
+					<img src="task6_presplit.png" width="300px"/>
 					<figcaption>cube.dae after pre-splitting many edges near a corner</figcaption>
 					</td>
 				</tr>
 				<tr style="height: 30px;"></tr>
 				<tr>
 					<td style="text-align: center;">
-					<img src="task6_presplit.png" width="300px"/>
+					<img src="task6_round.png" width="300px"/>
 					<figcaption>cube.dae after loop subdivision</figcaption>
 					</td>
 					<td style="text-align: center;">
