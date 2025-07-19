@@ -53,42 +53,95 @@
 		<h2>Section I: Bezier Curves and Surfaces</h2>
 
 		<h3>Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
+		<p>De Casteljau’s algorithm is a recursive method for evaluating and creating Bezier curves. The way we implemented it was to first create a function <code>BezierCurve::evaluateStep(...)</code> that would take in a set of control points and a parameter <code>t</code>, and then output the “intermediate” points that would result from lerping* the points at <code>t</code>. By calling this function recursively, we were able to calculate the position of any intermediate control points as well as the position on the curve at any given value of <code>t</code>.</p>
+		<p>*We created separate helper functions to aid our calculations and simplify our code.</p>
+		<br>
+		<p>Below are screenshots taken at each recursive step of evaluating a Bezier curve with 6 points at an arbitrary value of <code>t</code>.</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="teapot.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="bez6_level0.png" width="400px"/>
+				  <figcaption>6 control points.</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="teapot.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="bez6_level1.png" width="400px"/>
+				  <figcaption>First Step: 5 intermediate points.</figcaption>
 				</td>
 			  </tr>
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="teapot.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="bez6_level2.png" width="400px"/>
+				  <figcaption>Second Step: 4 intermediate points</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="teapot.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="bez6_level3.png" width="400px"/>
+				  <figcaption>Third Step: 3 intermediate points.</figcaption>
 				</td>
 			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="bez6_level4.png" width="400px"/>
+				  <figcaption>Fourth Step: 2 intermediate points.</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="bez6_level5.png" width="400px"/>
+				  <figcaption>Fifth Step: 1 final point</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+					<img src="bez6_level5_curve.png" width="400px"/>
+					<figcaption>The resulting Bezier Curve.</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<video src="scrolling_bezier.mp4" width="400px" style="image-rendering: auto;" autoplay loop muted playsinline></video>
+					<figcaption>Increasing t.</figcaption>
+				</td>
+			  </tr>	
 			</table>
+		</div>
+		
+		<div class="container">
+			
+			<img src="bez6_altered.png" width="400px"/>
+			<figcaption>Another curve with points at slightly different points</figcaption>
 		</div>
 
 		<h3>Part 2: Bezier surfaces with separable 1D de Casteljau</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>Now that we can calculate vectors from one step of de Casteljau using <code>evaluateStep()</code>, we just need to run evaluateStep recursively until it only returns one <code>Vector3D</code>. We implement this in the function <code>evaluate1D()</code>.</p>
+
+		<p>The meshes we are working with exist in 3D space. So to evaluate a some n by m bezier patch (which is defined by a grid of control points that creates a 3D “surface”), we need to first call <code>evaluate1D()</code> on each of the n bezier curves going in one direction with some parameter u. Finally, we call <code>evaluate1D()</code> while passing in the n points from the previous step and another parameter v. All this will allow us calculate the surface’s position at any parameters (u, v). This logic makes up our <code>evaluate()</code> function, which returns a single vector representing the value of the patch at (u, v)</p>
+
+		<p>Beneath the hood, the renderer may use the function to sample points from the curve and convert them to triangles to rasterize.</p>		
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<img src="task2.png" width="400px"/>
+			<figcaption>a teapot made up of bezier patches</figcaption>
+		</div>
 
 		<h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 
 		<h3>Part 3: Area-weighted vertex normals</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>Our task was to create a function that would calculate the area-weighted normal of any given function. This requires finding the normals of all the faces that surround a vertex, then average each face by its normal to produce a vector normal for an approximation of the vertex.</p>
 
+		<p>To implement this, we created a while loop that would start with the halfedge pointed at by the vertex. Then we’d use next(), twin(), and vertex() pointers to find the positions of the vertices for each face. After summing up the cross products of their vectors (obtained via subtracting the positions of the vertices) we divided by the number of surrounding faces to average the normal vectors. We were able to avoid calculating the area of the faces since the cross product of vectors was already needed to calculate the normals.</p>
+
+		<p>Finally, we normalized the average weighted vector at the very end with calls to sqrt() and dot().</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="rough_teapot.png" width="400px"/>
+				  <figcaption>teapot.dae with flat shading</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="smooth_teapot.png" width="400px"/>
+				  <figcaption>teapot.dae with Phong shading</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 		<h3>Part 4: Edge flip</h3>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
