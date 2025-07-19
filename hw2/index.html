@@ -9,7 +9,7 @@
 
 			.container {
 				margin: 0 auto;
-				padding: 60px 20%;
+				padding: 60px 10%;
 			}
 
 			figure {
@@ -243,6 +243,24 @@
 		<p>
 		After that, we traversed through all edges and flipped any edges that connected a new vertex to an old one before traversing through all vertices and edges one last time to mark all vertices and edges as <code>isNew = false</code>.</p>
 		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+					<img src="noloop.png" width="250px"/>
+					<figcaption>cow.dae</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="loop1.png" width="250px"/>
+					<figcaption>cow.dae w/ 1 loop subdivision</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="loop2.png" width="250px"/>
+					<figcaption>cow.dae w/ 2 loop subdivisions</figcaption>
+					</td>
+				</table>
+			</div>
 
 		<p>
 		After Loop Subdivision, meshes become noticeably smoother (especially around sharp corners and edges). This smoothing effect can be reduced by pre-splitting certain edges. By doing this, you create areas with many short edges that visually maintain sharpness. When subdivision is applied, it averages over these short adjacent edges, which helps preserve the sharpness in those regions. As a result, the subdivision doesn’t overly smooth out those edges.
