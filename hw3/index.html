@@ -1,10 +1,32 @@
 <html>
 	<head>
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
+		<script>
+MathJax = {
+  tex: {
+    displayMath: [["\\[", "\\]"]],
+  },
+  svg: {
+    displayAlign: "left"
+  }
+};
+</script>
+
+		<script type="text/javascript" id="MathJax-script" async
+			src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+		</script>
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 		<style>
 			h1 {
 				text-align: center;
+				font-size: 40px;
+			}
+
+			h2 {
+				font-size: 30px;
+			}
+
+			h2 {
 			}
 
 			.container {
@@ -12,8 +34,19 @@
 				padding: 60px 20%;
 			}
 
+			code {
+				background-color:rgb(240, 250, 255);
+				color:rgb(10, 30, 157);
+				padding-left: 1px;
+				padding-right: 1px;
+			}
+
 			figure {
 				text-align: center;
+			}
+
+			figcaption {
+				font-style: italic;
 			}
 
 			img {
@@ -23,6 +56,27 @@
 			body {
 				font-family: 'Inter', sans-serif;
 			}
+
+			.flex-container {
+				display: flex;
+				gap: 20px; /* spacing between boxes */
+				justify-content: flex-start; /* center the items horizontally */
+				align-items: flex-start;     /* center the items vertically */
+				height: 100vh;           /* full viewport height */
+			}
+
+			.box {
+				/* width: 200px;
+				height: 200px; */
+				text-align: left;
+				/* border: 2px solid #333;
+				background-color: #f0f0f0; */
+			}
+
+			.box p {
+				text-align: left;
+			}
+
 		</style>
 	</head>
 	<body>
@@ -48,8 +102,87 @@
 		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
 
 		<h2>Part 1: Ray Generation and Scene Intersection</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h3>Generating Rays</h3>
+		<p>The core rendering loop of our pathtracer starts with the function <code>PathTracer::raytrace_pixel()</code>. The pathtracer must generate and send rays originating from the camera and shooting “through” each pixel on the screen.</p>
+		<p>We generate these rays with <code>Camera::generate_rays(x, y)</code>. This function takes in a pair of coordinates in image space and outputs a <code>Ray</code> object in world space. In order to do that, we must generate the ray in camera space and only then can we transform it into world space.</p>
+		<p>Inside the <code>Camera::generate_rays(x, y)</code> function, we take the coordinates (x, y) and then apply several transformations to it.<p>
+		<ol>
+			<li>Subtract <code>x</code> and <code>y</code> by 0.5 in order to “center” the rays relative to the image plane, and then multiply them by 2 in order to normalize the image.</li>
+			<li>Multiply <code>x</code> by <code>tan(0.5 * hFov)</code> and <code>y</code> by <code>tan(0.5 * vFov)</code>, respectively.</li>
+			<li>Convert the coordinates (which are currently 2-dimensional) into a 3-dimensional vector, with the z-coordinate set to -1. We can imagine the image as a box projected onto the plane z = -1.</li>
+		</ol>
 
+		<p>After these transformations, we actually generate a <code>Ray</code> object and initialize it such that its origin exists at (0, 0), and its direction is a normalized vector passing through the point we created, at [x’, y’, -1].</p>
+		
+		<figure>
+			<img src="img2cam.png" width="100%"/>
+			<figcaption>Conversion of a coordinate from image space to camera space.</figcaption>
+		</figure>
+
+		<p>Now that we have the <code>Ray</code> in camera space, transforming it into world space is simply a matter of matrix multiplication. We are given the 3x3 matrix <code>c2w</code> which, when multiplied by a set of coordinates in camera space, rotates and scales the coordinates to their corresponding coordinates in world space. This brings us to our final transformation from camera space to world space.<p>
+		<ol type="1" start="4">
+			<li>We create a transformation matrix from c2w by inserting a column with the translation from the world origin to the camera (in world space), and a row with 4 zeroes and a 1. This matrix, when passed as an argument into the <code>transform_by()</code> method of a Ray object, will complete this transformation for us and mutate the Ray so that it exists in world space.</li>
+		</ol>
+
+		<figure>
+			<img src="cam2world.png" width="100%"/>
+			<figcaption>Conversion of a Ray from camera space to world space.</figcaption>
+		</figure>
+
+		<p>Now we are able to generate a ray through a pixel coordinate. However, we want to supersample and generate multiple rays for every pixel on the screen in order to minimize noise. We also want some sort of way to get the light information from the points on the objects that our rays intersect with, and update our sample buffer with it.</p>
+		<p>Inside of our <code>PathTracer::raytrace_pixel(x, y)</code> function, we generate a number of rays (specified by a parameter <code>ns_aa</code> that the user sets when rendering an image). Each ray is generated using our <code>Camera::generate_rays(x, y)</code> function, where we pass in a coordinate randomly sampled from the 1 by 1 pixel from (x, y) to (x + 1, y +  1). We take all of the rays generated, and average the scene radiance along them to determine the integral of radiance for each pixel. To do this, we:</p>
+		<ol>
+			<li>Store the coordinates (x, y) as a <code>Vector2D</code> and call it <code>origin</code>, representing the left corner of our pixel.</li>
+			<li>Initialize another <code>Vector2D</code> called <code>sample</code>, which is some randomly sampled coordinate (using <code>gridSampler->get_sample()</code>) with minimum values x, y and maximum values x+1, y+1. </li>
+			<li>Initialize a <code>Ray</code> with <code>Camera::generate_rays(x, y)</code> using the coordinates in <code>sample</code>.</li>
+			<li>Pass in the newly generated ray into <code>Pathtracer::est_radiance_global_illumination(Ray)</code>, obtaining the scene radiance along that ray.</li>
+			<li>Repeat steps 2-4 in a for-loop, iterating through it <code>ns_aa</code> times and calculate the integral of radiance for the pixel by averaging each ray’s scene radiance.</li>
+		</ol>
+
+		<h3>Ray-Primitive Intersections</h3>
+
+		<p>In order to test whether a Ray interests a triangle, we implemented the Möller-Trumbore Algorithm, which is an optimization shown in <a href=”https://cs184.eecs.berkeley.edu/su25/assets/lectures/09-11-ray-tracing+acceleration.pdf”>lecture 9</a>. The algorithm uses properties of barycentric coordinates, a system of coordinates where a coordinate is represented as a linear combination of a triangle’s three vectors at its vertices, in order to determine whether the intersection of the ray with the triangle’s plane is “inside” the triangle. We used the <a href=”https://cadxfem.org/inf/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf”>original paper</a> as well as the variables from the lecture 9 slide to guide our implementation.</p>
+		<p>The algorithm is derived from two equations. The first is the equation for a ray, \(R(t)=O+tD\), where \(O\) is the origin of the ray, \(D\) is the normalized direction vector, and \(t\) is the (scalar) parameter that specifies a point in ray's direction. The second equation is \(T(b_0, b_1, b_2)=b_0P_0+b_1P_1+b_2P_2\), where the set of three scalars \(b_0, b_1, b_2\) are the barycentric coordinates of a point. Since the vectors \(P_0, P_1, P_2\) are not linearly independent and (as a property of barycentric coordinates) the coordinates all must add up to 1, we can arbitrarily modify one of the scalars to make this a function of two arguments.</p>
+
+		<p>Now we have \(R(t)=O+tD\), and \(T(b_1, b_2) = (1 - b_1 - b_2)P_0 + b_1P_1+ b_2P_2\).</p>
+		<p>In order to find the point at which the ray intersects the triangle's plane, and whether the intersection lies <i>within</i> the triangle, we set the two equations equal to each other and get:</p>
+		<p>\(O+tD = (1 - b_1 - b_2)P_0 + b_1P_1+ b_2P_2\)</p>
+
+		From here, the Möller-Trumbore paper explains how to manipulate the equation and use Cramer's rule to obtain the following equation from lecture.
+		<div class="flex-container">
+			<div class="box">
+				<p>
+				\[
+				\begin{bmatrix}
+				t \\
+				b_1 \\
+				b_2
+				\end{bmatrix}
+				=
+				\frac{1}{S_1 \cdot E_1}
+				\begin{bmatrix}
+				S_2 \cdot E_2 \\
+				S_1 \cdot S \\
+				S_2 \cdot D
+				\end{bmatrix}
+				\]
+				</p>
+			</div>
+			<div class="box">
+				\[
+				\begin{align*}
+				\vec{E}_1 &= \vec{P}_1 - \vec{P}_0 \\
+				\vec{E}_2 &= \vec{P}_2 - \vec{P}_0 \\
+				\vec{S}   &= \vec{O} - \vec{P}_0 \\
+				\vec{S}_1 &= \vec{D} \times \vec{E}_2 \\
+				\vec{S}_2 &= \vec{S} \times \vec{E}_1
+				\end{align*}
+				\]
+			</div>
+  		</div>
+
+
+<!-- 
 		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
@@ -75,7 +208,7 @@
 			  </tr>
 			</table>
 		</div>
-		
+-->
 		<h2>Part 2: Bounding Volume Hierarchy</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
