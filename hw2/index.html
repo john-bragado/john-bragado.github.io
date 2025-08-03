@@ -32,11 +32,11 @@
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://john-bragado.dev/hw2/">john-bragado.dev/hw2/</a>
+		Link to webpage: <a href="https://john-bragado.dev/hw2/">john-bragado.dev/hw2/</a>
 
 		<br>
 		
-		Link to GitHub repository: (TODO) <a href="https://github.com/cal-cs184/hw2-meshedit-triangles">github.com/cal-cs184/hw2-meshedit-triangles</a>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184/hw2-meshedit-triangles">github.com/cal-cs184/hw2-meshedit-triangles</a>
 
 		<!-- <figure>
 			<img src="teapot.png" alt="Teapot" style="width:50%"/>
@@ -103,14 +103,13 @@
 				</td>
 				<td style="text-align: center;">
 					<video src="scrolling_bezier.mp4" width="400px" style="image-rendering: auto;" autoplay loop muted playsinline></video>
-					<figcaption>Increasing t.</figcaption>
+					<figcaption>Increasing t (this is a looping GIF)</figcaption>
 				</td>
 			  </tr>	
 			</table>
 		</div>
 		
-		<div class="container">
-			
+		<div style="display: flex; flex-direction: column; align-items: center;">
 			<img src="bez6_altered.png" width="400px"/>
 			<figcaption>Another curve with points at slightly different points</figcaption>
 		</div>
@@ -141,11 +140,11 @@
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="rough_teapot.png" width="400px"/>
+				  <img src="rough_teapot.png" width="300px"/>
 				  <figcaption>teapot.dae with flat shading</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="smooth_teapot.png" width="400px"/>
+				  <img src="smooth_teapot.png" width="300px"/>
 				  <figcaption>teapot.dae with Phong shading</figcaption>
 				</td>
 			  </tr>
@@ -169,6 +168,9 @@
 				</td>
 			  </tr>
 			</table>
+				<img src="flipss.jpg" width="300px"/>
+				<figcaption>a diagram we drew to visualize flipping</figcaption>
+
 		</div>
 
 		<div style="break-after:page"></div>
@@ -178,36 +180,37 @@
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="cowdef.png" width="400px"/>
+				  <img src="cowdef.png" width="300px"/>
 				  <figcaption>cow.dae</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="cowsplit.png" width="400px"/>
+				  <img src="cowsplit.png" width="300px"/>
 				  <figcaption>cow.dae with edge splits</figcaption>
 				</td>
 			  </tr>
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="beandef.png" width="400px"/>
+				  <img src="beandef.png" width="300px"/>
 				  <figcaption>bean.dae</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="beansplit.png" width="400px"/>
+				  <img src="beansplit.png" width="300px"/>
 				  <figcaption>bean.dae with edge splits and flips</figcaption>
 				</td>
 			  </tr>
 			</table>
 		</div>
+		<div style="break-after:page"></div>
 <p>Out of all the tasks on this assignment, task 5 was the one we definitely spent the most time on due to the tedious debugging journey we went through. We breezed through the initial code pretty quickly at first. But when we tested it out on a mesh, for some reason 1 or 2 faces would just vanish into thin air (see screenshot below). We reviewed every line to make sure the pointer assignments were right, we used the <code>check_for()</code> function and printed things to the console to keep track of which elements were pointing to what, and we even wrote down a page full of memory addresses from the debugging info screen just to see which were right.</p>
 	<div style="display: flex; flex-direction: column; align-items: center;">
 		<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			<tr>
 			<td style="text-align: center;">
-				<img src="edgesplit_bug.png" width="400px"/>
+				<img src="edgesplit_bug.png" width="300px"/>
 				<figcaption>missing face after edge splitting</figcaption>
 			</td>
 			<td style="text-align: center;">
-				<img src="scribblings.jpg" width="400px"/>
+				<img src="scribblings.jpg" width="300px"/>
 				<figcaption>scribblings of a madman</figcaption>
 			</td>
 			</tr>
@@ -241,12 +244,29 @@
 		After that, we traversed through all edges and flipped any edges that connected a new vertex to an old one before traversing through all vertices and edges one last time to mark all vertices and edges as <code>isNew = false</code>.</p>
 		</p>
 
+		<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+					<img src="noloop.png" width="250px"/>
+					<figcaption>cow.dae</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="loop1.png" width="250px"/>
+					<figcaption>cow.dae w/ 1 loop subdivision</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="loop2.png" width="250px"/>
+					<figcaption>cow.dae w/ 2 loop subdivisions</figcaption>
+					</td>
+				</table>
+			</div>
+
 		<p>
 		After Loop Subdivision, meshes become noticeably smoother (especially around sharp corners and edges). This smoothing effect can be reduced by pre-splitting certain edges. By doing this, you create areas with many short edges that visually maintain sharpness. When subdivision is applied, it averages over these short adjacent edges, which helps preserve the sharpness in those regions. As a result, the subdivision doesn’t overly smooth out those edges.
 		</p>
 
 		<p>
-			After loop subdivision, the meshes became much “smoother”, even for the sharp corners and edges. This unintended effect can be reduced by pre-splitting some edges near sharp corners to create an area with a lot of small faces and short edges that appears to be sharp. That way when loop subdivision starts smoothening things up, it will only take average on those adjacent edges that compose a mesh area and are still mostly preserving the sharp edges, therefore the averaging operation will not smooth those edges much. 
 		</p>
 
 			<div style="display: flex; flex-direction: column; align-items: center;">
@@ -275,7 +295,22 @@
 				</table>
 			</div>
 
+		<p>Some vertices seem to be smoothed less than others, it seems that the less degree the vertex has, it has less smoothing effect. I think this happens because even though the cube is geometrically symmetric, they are not really topologically symmetric. As is visible below, we just subdivides all the edges that lie in the diagonal of a face so that the cube is topologically symmetric.</p>
 
+		<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+					<img src="just_cube.png" width="300px"/>
+					<figcaption>cube.dae with edge splits on diagonals</figcaption>
+					</td>
+					<td style="text-align: center;">
+					<img src="smooth_cube.png" width="300px"/>
+					<figcaption>a symmetrical, loop subdivided cube.dae</figcaption>
+					</td>
+				</tr>
+				</table>
+			</div>
 		<!-- <h2>(Optional) Section III: Potential Extra Credit - Art Competition: Model something Creative</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
