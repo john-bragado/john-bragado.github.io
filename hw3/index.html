@@ -31,12 +31,12 @@ MathJax = {
 
 			.container {
 				margin: 0 auto;
-				padding: 60px 20%;
+				padding: 60px 10%;
 			}
 
 			code {
-				background-color:rgb(240, 250, 255);
-				color:rgb(10, 30, 157);
+				background-color:rgb(255, 250, 250);
+				color:rgb(130,10, 30);
 				padding-left: 1px;
 				padding-right: 1px;
 			}
@@ -60,15 +60,15 @@ MathJax = {
 			.flex-container {
 				display: flex;
 				gap: 20px; /* spacing between boxes */
-				justify-content: flex-start; /* center the items horizontally */
-				align-items: flex-start;     /* center the items vertically */
-				height: 100vh;           /* full viewport height */
+				justify-content: center; /* center the items horizontally */
+				align-items: center;     /* center the items vertically */
 			}
 
 			.box {
 				/* width: 200px;
 				height: 200px; */
 				text-align: left;
+				padding: 10px;
 				/* border: 2px solid #333;
 				background-color: #f0f0f0; */
 			}
@@ -173,47 +173,229 @@ MathJax = {
 				\begin{align*}
 				\vec{E}_1 &= \vec{P}_1 - \vec{P}_0 \\
 				\vec{E}_2 &= \vec{P}_2 - \vec{P}_0 \\
-				\vec{S}   &= \vec{O} - \vec{P}_0 \\
+				\end{align*}
+				\]
+			</div>
+			<div class="box">
+				\[
+				\begin{align*}
 				\vec{S}_1 &= \vec{D} \times \vec{E}_2 \\
 				\vec{S}_2 &= \vec{S} \times \vec{E}_1
 				\end{align*}
 				\]
 			</div>
+			<div class="box">
+				\[
+				\begin{align*}
+				\vec{S}   &= \vec{O} - \vec{P}_0 \\
+				\end{align*}
+				\]
+			</div>
   		</div>
 
+		<p>For our implementation of the algorithm, we decided not to calculate all of the components at the beginning of the function but instead spread checks in between that might return <code>false</code>.</p>
 
-<!-- 
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
+		<ol>
+			<li>
+				We first calculate the vectors <code>s1</code> and <code>e1</code> as shown in the equations above, and set the result to a variable <code>det</code> (short for determinant). We also check to make sure the determinant is nonzero (since \(\frac{1}{0}\) is undefined) and return <code>false</code> if <code>det == 0</code></li>
+			</li>
+			<li>Then, we calculate <code>s</code>, and calculate one of our barycentric coordinates <code>b1</code> by multiplying the inverse of <code>det</code> by the dot product of <code>s1</code> and <code>s</code>. Before we proceeding, we return false if <code>b1</code> is less than 0 or greater than 1, since barycentric coordinates that lie within the triangle satisfy the condition that all 3 coordiantes are between 0 and 1. </li>
+			<li>Next we do something similar for <code>b2</code>, calculating for it by dividin the dot product of <code>s2</code> and the ray direction <code>D</code> by the inverse of <code>det</code>. Once again, we check to make sure <code>b1 > 0.0 || b1 < 1.0</code> is false before proceeding. </li>
+			<li>Now that we are certain that the intersection between the ray and the triangle's plane does in fact lie within the bounds of the triangle, we calculate <code>t</code> by finding the dot product of <code>s2</code> and <code>e2</code>, and dividing that by the inverse of <code>det</code> and return <code>true</code>.</li>
+		</ol>
+
+		<p>The same algorithm used to evaluate the intersection in the <code>Triangle::has_intersection(Ray)</code> function used above was also used for <code>Triangle::intersect(Ray, Intersection)</code>, but with the addition of writing to the <code>Intersection</code> object the triangle's properties (the value of <code>t</code>, the <code>Primitive</code> object, the BSDF property, and the face normal). The ray's <code>max_t</code> attribute was also updated so that any intersection with an object further than the current primitive would not show up in front of this one. </p>
+
+		<p>As for evaluating intersections analytically with spheres, we followed a similar process but with a different algorithm. Utilizing <a href="https://gfxcourses.stanford.edu/cs348b/spring22content/media/intersection/rt1_3GyBK6F.pdf">lecture slides</a> from Stanford's Spring 2022 offering of CS348b, we used the following formulas:</p>
+		<div class="flex-container">
+			<div class="box">
+				<p><b>Ray:</b> \(
+				r(t) = \mathbf{o} + t\mathbf{d}
+				\)</p>				
+			</div>
+			<div class="box">
+				<p><b>Sphere:</b> \(
+				\|\mathbf{p} - \mathbf{c}\|^2 - r^2 = 0
+				\)</p>
+			</div>
+		</div>
+		<p>To find the intersection between the ray and sphere, we set\[
+		p = r(t) = o + td
+		\]</p>
+		<p>where p is the set of all points on the edge of the sphere. Thus, finding the points where \(p=r(t)\) will allow us to find where the ray and sphere intersect.</p>
+		</p>
+		<p>\[
+		(\mathbf{o} + t\mathbf{d} - \mathbf{c})^2 - r^2 = 0
+		\]</p>
+
+		<p>We can now expand the equation into quadratic form and solve for the coefficients \(a\), \(b\), and \(c\) analytically with the quadratic formula.</p>
+
+		<p>\[
+		at^2 + bt + c = 0
+		\]</p>
+
+		<p>\[
+		a = \mathbf{d} \cdot \mathbf{d}
+		\]</p>
+
+		<p>\[
+		b = 2(\mathbf{o} - \mathbf{c}) \cdot \mathbf{d}
+		\]</p>
+
+		<p>\[
+		c = ((\mathbf{o} - \mathbf{c}) \cdot (\mathbf{o} - \mathbf{c})) - r^2
+		\]</p>
+
+		<p>By solving the quadratic equation, we can find the intersection points between the ray and the sphere. Similarly to with the ray-triangle algorithm, If the discriminant \(b^2 - 4ac\) is negative, then there is no intersection and we return false without needing to do any further calculation. If it is zero, then there is one intersection point (the ray is tangent to the sphere). If it is positive, then there are two intersection points and we assign the smaller to <code>t1</code> and the larger to <code>t2</code>. Finally, we update the <code>Intersection</code> object and the ray's <code>max_t</code> properties accordingly.</p>
+		
+		<p>Below are some renders with debug/normal shading to demonstrate that intersection is implemented properly.</p>
+		
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				<td style="text-align: center; padding: 10px;">
+				  <img src="CBbunny.png" width="400px"/>
+				  <figcaption>CBbunny.png</figcaption>
 				</td>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				<td style="text-align: center; padding: 10px;">
+				  <img src="CBspheres.png" width="400px"/>
+				  <figcaption>CBspheres.png</figcaption>
 				</td>
 			  </tr>
 			</table>
 		</div>
--->
+
 		<h2>Part 2: Bounding Volume Hierarchy</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>Our task for this part was to implement a function, <code>BVHAccel::construct_bvh()</code> that takes in a set of primitives and a max_leaf size, and recursivelyt constructs a Bounding Volume Hierarchy (BVH) tree. Although the bulk of the logic is implemented in the <code>BVHAccel::construct_bvh()</code> function, we also implemented two helper functions, <code>BVHAccel::calcVariance()</code> and <code>BVHAccel::chooseAxis</code>.</p>
+		<p>We took the following steps inside our <code>BVHAccel::construct_bvh()</code> function:</p>
+		<ol>
+			<li>Given only a set of primitives and a max_leaf_size, we initialize a <code>BBox</code> (bounding box) object.</li>
+			<li>We then iterate through every primitive in the set, expanding the bounding box to include all primitives using <code>bbox.expand()</code></li>
+			<li>We then construct a new <code>BVHNode</code> object with the <code>BBox</code> we just created and expanded. We also calculate the average coordinates of all primitives in this bounding box and store it in a 3D vector.</li>
+		</ol>
+
+		<p>The reason we are storing the mean position of the primitives is for our splitting heuristic. To split each bounding box, we decided to use the variance of the primitives' centroids along each axis. This is because the variance is a measure of how spread out the points are, and we want to <b>split the bounding box along the mean of the axis with the highest variance</b> in order to minimize the number of primitives in each child node.</p> 
+		
+		<ol start="4">
+			<li>If the number of primitives in the current node is at least as large as the <code>max_leaf_size</code>, then the current node is considered an "interior" node and will contain two leaf nodes.</li>
+			<ol type="a">
+				<li>We created a helper function called <code>calcVariance</code> which takes in a set of primitives and outputs a vector of the variances of the primitives' centroids along each of the three axes. We find which axis has the highest variance and store that to a variable called <code>axis</code></li>
+				<li>We then use the <code>std::partition()</code> function to essentially split and reorder the primitives, with all primitives of centroids higher than the mean going to the right and all lower than the mean going to the left.</li>
+				<li>We construct two new nodes (recursively) calling <code>BVHAccel::construct_bvh()</code> isnide of itself twice; once for the left node and once for the right node.</li>
+			</ol>
+			<li>Otherwise, the current node is a "leaf" node and does not have any children, but does have pointers to the primitives passed in</li>
+			<li>Finally, we return the current node.</li>
+		</ol>
+
+		<p>Now that we aren't checking whether a ray intersects with every single primitive in the scene, we are able to render files with thousands of triangles at much faster speeds.</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center; padding: 10px;">
+				  <img src="CBdragon.png" width="400px"/>
+				  <figcaption>CBdragon.png</figcaption>
+				</td>
+				<td style="text-align: center; padding: 10px;">
+				  <img src="CBlucy.png" width="400px"/>
+				  <figcaption>CBlucy.png</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+		<p>
+			Comparing the mesh in cow.dae, we found that even though our BVH implementation increased the time it took to construct the BVH from 0.0010 seconds to 0.0033 seconds, the time it took to actually render slashed dramatically from 20.8426 seconds to 0.0469 seconds. In addition, the average intersections per ray dropped from about 745 per ray to about 1.6, and the average speed in millions of rays per second increased from 20,000 rays per second to 10 million rays per second.
+			We see similar results with the other meshes we tested, such as maxplanck.dae and CBlucy.dae, as shown in the table below. Overall, we notice that although the time it takes to build the bounding volume hierarchy structure does tend to add some miliseconds, that added time pales in comparison to the speed and performance gains we make from rendering using BVH. As the data shows, the computer can achieve the same result while checking for hundreds or thousands times less intersections for each ray. This reduction of unecessary computation and memory storage results in thousands of times more rays generated per second, and drastic reductions in rendering time.
+			The most extreme example of this is the CBlucy.dae mesh, which has 133,796 primitives. The time it took to render the scene dropped from 16,260.17 seconds to 0.0464 seconds (which is almost the same time as the cow.dae mesh took to render).</p>
+		</p>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center; padding: 10px;">
+				  <img src="cow.png" width="350px"/>
+				  <figcaption>cow.dae</figcaption>
+				</td>
+				<td style="text-align: center; padding: 10px;">
+				  <img src="cowslow.png" width="400px"/>
+				  <figcaption>BEFORE implementing BVH</figcaption>
+				  <p></p>
+				  <img src="cowfast.png" width="400px"/>
+				  <figcaption>AFTER implementing BVH</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+
+<table cellpadding="8" cellspacing="0">
+  <thead>
+    <tr>
+      <th>File</th>
+	  <th># Primitives</th>
+      <th>BVH construction (sec)</th>
+      <th>Rendering time (sec)</th>
+	  <th>AVG speed (rays / sec)</th>
+	  <th>AVG intersections per ray</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>cow.dae</td>
+	  <td>5,856</td>
+      <td>0.0001 -> 0.0033</td>
+      <td>20.8426 -> 0.0469</td>
+	  <td>0.023 mil -> 10.12 mil</td>
+	  <td>745.53 -> 1.66</td>
+    </tr>
+    <tr>
+      <td>maxplanck.dae</td>
+	  <td>50,801</td>
+      <td>0.0012 -> 0.0347</td>
+      <td>195.5508 -> 0.0567</td>
+	  <td>0.025 mil -> 8.25 mil</td>
+	  <td>6022.19 -> 2.29</td>
+    </tr>
+	<tr>
+      <td>CBlucy.dae</td>
+	  <td>133,796</td>
+      <td>0.0044 -> 0.1064</td>
+      <td>549.0331 -> 0.0464</td>
+	  <td>0.0009 mil -> 10.23 mil</td>
+	  <td>16,260.17 -> 0.69</td>
+    </tr>
+  </tbody>
+</table>
+
 
 		<h2>Part 3: Direct Illumination</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+<p></p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="Part3/part3s1l1.png" width="400px"/>
+				  <figcaption>1 light ray</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="Part3/part3s1l4.png" width="400px"/>
+				  <figcaption>4 light rays</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="Part3/part3s1l16.png" width="400px"/>
+				  <figcaption>16 light rays</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="Part3/part3s1l64.png" width="400px"/>
+				  <figcaption>64 light rays</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 		<h2>Part 4: Global Illumination</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
@@ -222,9 +404,10 @@ MathJax = {
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 		<h2>(Optional) Part 6: Extra Credit Opportunities</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		No extra credit opportunities were implemented in this homework.
 		
-		<h2>Additional Notes (please remove)</h2>
+		
+		<!-- <h2>Additional Notes (please remove)</h2>
 		<ul>
 			<li>You can also add code if you'd like as so: <code>code code code</code></li>
 			<li>If you'd like to add math equations, 
@@ -233,7 +416,7 @@ MathJax = {
 					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
 				</ul>
 			</li>
-		</ul>
+		</ul> -->
 		</div>
 	</body>
 </html>
