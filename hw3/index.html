@@ -82,24 +82,20 @@ MathJax = {
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 3 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">Names: John Bragado, Kevin Hu</div>
 
+		Link to webpage: <a href="https://john-bragado.dev/hw3/">john-bragado.dev/hw3</a>
 		<br>
-
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184/hw-pathtracer-updated-rays">github.com/cal-cs184/hw-pathtracer-updated-rays</a>
 		
-		<figure>
-			<img src="cornell.png" alt="Cornell Boxes with Bunnies" style="width:70%"/>
-			<figcaption>You can add images with captions!</figcaption>
-		</figure>
-
-		<!--
-		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
-		-->
-
 		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+		<p>In this assignment, we implemented Monte Carlo path tracing to simulate realistic lighting in 3D scenes. Our goal was to model how light interacts with surfaces by tracing paths that account for both direct illumination (light coming directly from a source) and also indirect illumination (light reflecting off of other surfaces). Most of our logic centers on sampling and integrating radiance using recursive bounce calculations with the rendering equations. We also implemented both hemisphere and light importance sampling methods. Raytracing is a powerful technique because it mimics the physical behavior of light, allowing us to generate images with natural shadows, soft lighting, and color bleeding effects, and we really enjoyed this homework assignment.</p>
+
+		<h3>John’s thoughts:</h3>
+		<p>This homework was very <i>enlightening</i>. Raytracing is something I’ve always been fascinated by and this assignment is the very reason I wanted to take this class in the first place. Getting to combine everything I’ve learned so far (not only in terms of conceptual graphics from this class, but also concepts like recursion from CS 61A and probabilistic algorithms from CS70) into a project with such satisfying visual results was very rewarding to me. Although the homework took a very long time, and debugging was a nightmare at times, it was fun <i>bouncing</i> ideas off of Kevin and seeing our engine render beautifully ray-traced scenes.</p>
+
+		<h3>Kevin’s thoughts:</h3>
+		<p>Things that I am most interested in is definitely adaptive sampling as unlike other parts of the assignment that is mostly mechanical and physical based, optimization tasks like this using stats always interests me as these tricks often feel smart and interesting as they are less discussed in general. What I learned the most from this is that it is very important to make sure we understand everything conceptually before getting started, even as a person who learns things faster by playing around with the code, I often find that I jump in too early without all the necessary context to play around everything effectively, many times resulting a code that need major revision after I fully understand everything.</p>
 
 		<h2>Part 1: Ray Generation and Scene Intersection</h2>
 		<h3>Generating Rays</h3>
@@ -138,10 +134,11 @@ MathJax = {
 			<li>Pass in the newly generated ray into <code>Pathtracer::est_radiance_global_illumination(Ray)</code>, obtaining the scene radiance along that ray.</li>
 			<li>Repeat steps 2-4 in a for-loop, iterating through it <code>ns_aa</code> times and calculate the integral of radiance for the pixel by averaging each ray’s scene radiance.</li>
 		</ol>
-
+		
+		<div style="break-after:page"></div>
 		<h3>Ray-Primitive Intersections</h3>
 
-		<p>In order to test whether a Ray interests a triangle, we implemented the Möller-Trumbore Algorithm, which is an optimization shown in <a href=”https://cs184.eecs.berkeley.edu/su25/assets/lectures/09-11-ray-tracing+acceleration.pdf”>lecture 9</a>. The algorithm uses properties of barycentric coordinates, a system of coordinates where a coordinate is represented as a linear combination of a triangle’s three vectors at its vertices, in order to determine whether the intersection of the ray with the triangle’s plane is “inside” the triangle. We used the <a href=”https://cadxfem.org/inf/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf”>original paper</a> as well as the variables from the lecture 9 slide to guide our implementation.</p>
+		<p>In order to test whether a Ray interests a triangle, we implemented the Möller-Trumbore Algorithm, which is an optimization shown in <a href=”https://cs184.eecs.berkeley.edu/su25/assets/lectures/09-11-ray-tracing+acceleration.pdf”>lecture 9</a>. The algorithm uses properties of barycentric coordinates, a system of coordinates where a coordinate is represented as a linear combination of a triangle’s three vectors at its vertices, in order to determine whether the intersection of the ray with the triangle’s plane is “inside” the triangle. We used the original paper as well as the variables from the lecture 9 slide to guide our implementation.</p>
 		<p>The algorithm is derived from two equations. The first is the equation for a ray, \(R(t)=O+tD\), where \(O\) is the origin of the ray, \(D\) is the normalized direction vector, and \(t\) is the (scalar) parameter that specifies a point in ray's direction. The second equation is \(T(b_0, b_1, b_2)=b_0P_0+b_1P_1+b_2P_2\), where the set of three scalars \(b_0, b_1, b_2\) are the barycentric coordinates of a point. Since the vectors \(P_0, P_1, P_2\) are not linearly independent and (as a property of barycentric coordinates) the coordinates all must add up to 1, we can arbitrarily modify one of the scalars to make this a function of two arguments.</p>
 
 		<p>Now we have \(R(t)=O+tD\), and \(T(b_1, b_2) = (1 - b_1 - b_2)P_0 + b_1P_1+ b_2P_2\).</p>
@@ -248,6 +245,7 @@ MathJax = {
 
 		<p>By solving the quadratic equation, we can find the intersection points between the ray and the sphere. Similarly to with the ray-triangle algorithm, If the discriminant \(b^2 - 4ac\) is negative, then there is no intersection and we return false without needing to do any further calculation. If it is zero, then there is one intersection point (the ray is tangent to the sphere). If it is positive, then there are two intersection points and we assign the smaller to <code>t1</code> and the larger to <code>t2</code>. Finally, we update the <code>Intersection</code> object and the ray's <code>max_t</code> properties accordingly.</p>
 		
+		<br>
 		<p>Below are some renders with debug/normal shading to demonstrate that intersection is implemented properly.</p>
 		
 		<div style="display: flex; flex-direction: column; align-items: center;">
@@ -265,6 +263,8 @@ MathJax = {
 			</table>
 		</div>
 
+		<div style="break-after:page"></div>
+
 		<h2>Part 2: Bounding Volume Hierarchy</h2>
 		<p>Our task for this part was to implement a function, <code>BVHAccel::construct_bvh()</code> that takes in a set of primitives and a max_leaf size, and recursivelyt constructs a Bounding Volume Hierarchy (BVH) tree. Although the bulk of the logic is implemented in the <code>BVHAccel::construct_bvh()</code> function, we also implemented two helper functions, <code>BVHAccel::calcVariance()</code> and <code>BVHAccel::chooseAxis</code>.</p>
 		<p>We took the following steps inside our <code>BVHAccel::construct_bvh()</code> function:</p>
@@ -274,7 +274,7 @@ MathJax = {
 			<li>We then construct a new <code>BVHNode</code> object with the <code>BBox</code> we just created and expanded. We also calculate the average coordinates of all primitives in this bounding box and store it in a 3D vector.</li>
 		</ol>
 
-		<p>The reason we are storing the mean position of the primitives is for our splitting heuristic. To split each bounding box, we decided to use the variance of the primitives' centroids along each axis. This is because the variance is a measure of how spread out the points are, and we want to <b>split the bounding box along the mean of the axis with the highest variance</b> in order to minimize the number of primitives in each child node.</p> 
+		<p>The reason we are storing the mean position of the primitives is for our splitting heuristic. To split each bounding box, we decided to use the variance of the primitives' centroids along each axis. This is because the variance is a measure of how spread out the points are, and we want to <b>split the bounding box along the mean of the axis with the highest variance</b> in order to prevent the bounding boxes from being extremely "flat". By splitting the bounding box along its longest axis, we keep the child nodes as close to a cube as possible.</p> 
 		
 		<ol start="4">
 			<li>If the number of primitives in the current node is at least as large as the <code>max_leaf_size</code>, then the current node is considered an "interior" node and will contain two leaf nodes.</li>
@@ -368,10 +368,40 @@ MathJax = {
   </tbody>
 </table>
 
+		<div style="break-after:page"></div>
 
 		<h2>Part 3: Direct Illumination</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-<p></p>
+		<p>In <code>estimate_direct_lighting_hemisphere</code>, we calculate the direct lighting at a point by randomly picking directions over the whole hemisphere above the surface. We first set up a coordinate frame based on the surface normal so we can easily work in local space. Then, for each sample, we pick a random direction in the hemisphere, check if that direction hits anything (by tracing a shadow ray), and if not blocked, we evaluate the BSDF to see how much light reflects toward the viewer. We multiply the BSDF value by the cosine of the angle with the normal and divide by the probability of picking that direction (the PDF). After looping through all samples, we average the results. This method works for any scene, but it’s pretty noisy because many of the random directions don’t actually hit lights.</p>
+		<p>In <code>estimate_direct_lighting_importance()</code>, we improve performance by only sampling directions that actually point toward lights. For each light in the scene, we sample directions based on how the light emits light — which means we’re more likely to sample useful directions. If the light is a point or directional light (delta light), we just take one sample. For area lights, we take multiple samples (defined by global parameter <code>ns_area_light</code>). For each one, we shoot a shadow ray toward the light, check if it’s blocked, and if not, we compute how much light reflects using the BSDF, cosine term, and the PDF. We average the result over all samples and all lights. Since we’re only sampling directions that contribute to the final color, this method gives us cleaner images with less noise.</p>
+
+		<div style="break-after:page"></div>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="CBbunny_L_64_32.png" width="400px"/>
+				  <figcaption>importance sampling</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="spheres_L.png" width="400px"/>
+				  <figcaption>importance sampling</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="CBbunny_H_64_32.png" width="400px"/>
+				  <figcaption>hemisphere sampling</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="spheres_H.png" width="400px"/>
+				  <figcaption>hemisphere sampling</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+
+		<p>The noise reduction when switching from hemisphere to importance sampling is especially visible in shadows. As seen below, fewer light rays per area light result in noisier renders overall, but especially in the soft shadows.</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
@@ -397,26 +427,273 @@ MathJax = {
 			</table>
 		</div>
 
+		<p>The results from hemisphere sampling are typically much noisier than with importance sampling, which provides us a much "smoother" look overall. Hemisphere sampling tends to have noise throughout the entire scene, but importance sampling has especially noisy soft shadows. This demonstrates that importance sampling appears to produce smoother results in well-lit areas, but noisier results in areas of indirect lighting (the soft shadows) or occluded corners. Hemisphere sampling, on the other hand, appears to be uniformly noisy. In addition, hemisphere sampling gives a "glow" effect around the edge of area lights, which importance sampling does not.</p>
+
+		<div style="break-after:page"></div>
+
 		<h2>Part 4: Global Illumination</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+		<p>To implement global illumination in our path tracer, we put most of the logic in the <code>PathTracer::at_least_one_bounce_radiance()</code> function. This function handles both direct and indirect lighting by recursively tracing rays, letting them bounce past just the first intersection. At each bounce, we evaluate the BSDF to sample a new direction and compute the radiance along that new path. We check if the ray intersects a surface, and if it does we call the function again within itself to gather more light recursively. Our first base case we checked for was if <code>r.depth == 0</code>, which would only ever be reached if the user set the <code>max_ray_depth</code>> was set to 0. Otherwise, the primary base case would be returning <code>one_bounce_radiance()</code> for the last bounce. The recursive option starts from the camera and continues bouncing off objects until it reaches its' max depth, where it stops and adds the accumulative luminance.</p>
+
+		<p>We also implemented non-accumulative bouncing. If <code>isAccumBounces</code> is set to false, then instead of calling getting the direct light at every recursive bounce and including it in the total, we only go to the very last bounce and grab the indirect lighting bouncing from one surface, to another, and then to the camera.</p>
+
+
+		<h3>Global Illumination</h3>
+
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyAccumBounce5.png" width="300px"/>
+					<figcaption>CBbunny.dae</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/glob.png" width="300px"/>
+					<figcaption>CBspheres_lambertian.dae</figcaption>
+				</td>
+			</tr>
+			</tr>
+		</table>
+
+		<h3>Direct vs Indirect Lighting</h3>
+
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyAccumBounce1.png" width="200px"/>
+					<figcaption>Only Direct Lighting</figcaption>
+				</td>
+				<td><large>+</large></td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyJustIndirect.png" width="200px"/>
+					<figcaption>Only Indirect Lighting</figcaption>
+				</td>
+				<td><large>=</large></td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyAccumBounce5.png" width="200px"/>
+					<figcaption>Direct & Indirect</figcaption>
+				</td>
+			</tr>
+			</tr>
+		</table>
+
+		<div style="break-after:page"></div>
+
+		<h3>Accumulative Bouncing</h3>
+
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyAccumBounce0.png" width="100px"/>
+					<!-- <figcaption>1 sample per pixel</figcaption> -->
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyAccumBounce1.png" width="100px"/>
+					<!-- <figcaption>2 sample per pixel</figcaption> -->
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyAccumBounce2.png" width="100px"/>
+					<!-- <figcaption>4 sample per pixel</figcaption> -->
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyAccumBounce3.png" width="100px"/>
+					<!-- <figcaption>1 sample per pixel</figcaption> -->
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyAccumBounce4.png" width="100px"/>
+					<!-- <figcaption>2 sample per pixel</figcaption> -->
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyAccumBounce5.png" width="100px"/>
+					<!-- <figcaption>4 sample per pixel</figcaption> -->
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyNoAccumBounce0.png" width="100px"/>
+					<figcaption>m=0</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyNoAccumBounce1.png" width="100px"/>
+					<figcaption>m=1</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyNoAccumBounce2.png" width="100px"/>
+					<figcaption>m=2</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyNoAccumBounce3.png" width="100px"/>
+					<figcaption>m=3</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyNoAccumBounce4.png" width="100px"/>
+					<figcaption>m=4</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyNoAccumBounce5.png" width="100px"/>
+					<figcaption>m=5</figcaption>
+				</td>
+			</tr>
+		</table>
+
+		<p>At the second and the third bounce of light, we see the bunny in the scene dimly lit. The "bounce light" that these levels contribute are crucial to the realism that we are trying to achieve with ray tracing. The second and third bounces add some light to the shadows that, in the direct lighting render, would otherwise be completely dark. This brings our render much closer to photorealism.</p>
+
+		<h3>Russian Roulette</h3>
+
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyRRD0.png" width="200px"/>
+					<figcaption>max_ray_depth = 0</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyRRD1.png" width="200px"/>
+					<figcaption>max_ray_depth = 1</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyRRD2.png" width="200px"/>
+					<figcaption>max_ray_depth = 2</figcaption>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyRRD3.png" width="200px"/>
+					<figcaption>max_ray_depth = 3</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyRRD4.png" width="200px"/>
+					<figcaption>max_ray_depth = 4</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/CBbunnyRRD100.png" width="200px"/>
+					<figcaption>max_ray_depth = 100</figcaption>
+				</td>
+			</tr>
+		</table>
+		
+		<div style="break-after:page"></div>
+		<h3>Samples per pixel</h3>
+
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+				<td style="text-align: center;">
+					<img src="Part4/Part4SamplePerPixelS1.png" width="200px"/>
+					<figcaption>1 sample per pixel</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/Part4SamplePerPixelS2.png" width="200px"/>
+					<figcaption>2 samples per pixel</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/Part4SamplePerPixelS4.png" width="200px"/>
+					<figcaption>4 samples per pixel</figcaption>
+				</td>
+			</tr>
+			<tr>
+				<td style="text-align: center;">
+					<img src="Part4/Part4SamplePerPixelS8.png" width="200px"/>
+					<figcaption>8 samples per pixel</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/Part4SamplePerPixelS16.png" width="200px"/>
+					<figcaption>16 samples per pixel</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="Part4/Part4SamplePerPixelS64.png" width="200px"/>
+					<figcaption>64 samples per pixel</figcaption>
+				</td>
+			</tr>
+		</table>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<img src="Part4/Part4SamplePerPixelS64.png" width="400px"/>
+				<figcaption>1024 sample per pixel</figcaption>
+			</div>		
+
+		<div style="break-after:page"></div>
 
 		<h2>Part 5: Adaptive Sampling</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>Adaptive sampling is a technique where we detect the variance of the samples we make and run a Z-test to figure out how confident we are in the current sample. Basically, we check our sample as the algorithm runs. If the results change a lot each time we sample, we take more samples since we're less confident the current ones reflect the actual value. But if all the samples we've got so far give very similar results, we feel confident that even with more samples in the future, the result will stay the same, so we stop sampling.</p>
+		<p>In our implementation, we just followed the guidelines. For each sample, I kept track of the s1 and s2 numbers, and computed the standard deviation and mean every time a batch finished. If the Z-test shows the confidence level is higher than our tolerance, we stop and return the result</p>
+		
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="Part5/blob(Adaptive).png" width="150px"/>
+				  <figcaption>blob.dae</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="Part5/CBsphere(Adaptive).png" width="150px"/>
+				  <figcaption>CBspheres_lambertian.dae</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="Part5/bunny(Adaptive).png" width="150px"/>
+				  <figcaption>CBbunny.dae</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="Part5/dragon(Adaptive).png" width="150px"/>
+				  <figcaption>dragon.dae</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="Part5/blob(Adaptive)_rate.png" width="150px"/>
+				  <figcaption>blob.dae rate</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="Part5/CBsphere(Adaptive)_rate.png" width="150px"/>
+				  <figcaption>CBsphere_lambertian.dae rate</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="Part5/bunny_rate.png" width="150px"/>
+				  <figcaption>CBbunny.dae rate</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="Part5/dragon(Adaptive)_rate.png" width="150px"/>
+				  <figcaption>dragon.dae rate</figcaption>
+				</td>
+			  </tr>
+			</table>
+
+		<div style="break-after:page"></div>
 
 		<h2>(Optional) Part 6: Extra Credit Opportunities</h2>
-		No extra credit opportunities were implemented in this homework.
-		
-		
-		<!-- <h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul> -->
-		</div>
+		<p>For this homework, we attempted to implement a jittered pixel sampler (challenge level 1).</p>
+
+		<p>Here we implemented Jittered sampling that by adding some a random offset within the pixel, we can see that when using sample size 1 the distribution of the shadow under the bunny with default sampling look to be distributed in a pattern while Jittered Sampling randomizes the noise a little bit so that we cannot perceive this fake pattern in noise created by uniformed sample, also see the wall that in default we have some aliasing of almost notch like cutout but with Jittered sampling, because the randomness while it is not clean it certainly don’t have that patterned noise we are seeing which is more pleasant to human eye as we tend to see patterns more clearly.</p>
+
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+				<td style="text-align: center;">
+				  <img src="extra/BunnyNormalSample.png" width="300px"/>
+				  <figcaption>Uniform Sampled Bunny</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="extra/Uniform.png" width="200px"/>
+				  <figcaption>Wall corner (uniform)</figcaption>
+				</td>
+				<td style="text-align: center;">
+				   <img src="extra/UniformSampling.png" width="200px"/>
+				  <figcaption>Closeup of a soft shadow (uniform)</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="extra/BunnyJitteredSample.png" width="300px"/>
+				  <figcaption>Jitter Sampled Bunny</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="extra/Jittered.png" width="200px"/>
+				  <figcaption>Wall corner (jittered)</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="extra/JitteredSampling.png" width="200px"/>
+				  <figcaption>Closeup of a soft shadow (jittered)</figcaption>
+				</td>
+			  </tr>
+			</table>
+
+		<h3>Acknowledgement of AI</h3>
+		<p> Our use of AI for this project was limited to asking LLMs to explain concepts to us on a high level and assisting our debugging process.
+			We did not ask AI to write code for us.</p>
+	</div>
 	</body>
 </html>
